@@ -2,10 +2,20 @@
 
 void prinScanResult(int networksFound)
 {
+  bool t = true;
   for (int i = 0; i < networksFound; i++)
   {
-    if (strcmp(WiFi.SSID(i).c_str(),"PONCIRUS") == 0)
+    if (strcmp(WiFi.SSID(i).c_str(),"Bingchen_Wang  ") == 0)
+    {
       Serial.printf("%d: %s, Ch:%d (%ddBm) %s\n", i + 1, WiFi.SSID(i).c_str(), WiFi.channel(i), WiFi.RSSI(i), WiFi.encryptionType(i) == ENC_TYPE_NONE ? "open" : "");
+      t = false;
+      break;
+    }
+  }
+
+  if (t)
+  {
+    Serial.printf("cannot find ssid\n");
   }
 }
 
