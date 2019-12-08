@@ -1,5 +1,7 @@
 // move.h
 
+#include "Arduino.h"
+
 #ifndef MOVE_H
 #define MOVE_H
 
@@ -15,6 +17,6 @@ public:
     ~move();
     void forward();
     void stop();
-}
+};
 
 #endif

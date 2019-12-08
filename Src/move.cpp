@@ -1,8 +1,9 @@
 // move.cpp
 
 #include "move.h"
+#include "Arduino.h"
 
-move::move() : pin(p)
+move::move()
 {
     Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
     pwm.begin();
