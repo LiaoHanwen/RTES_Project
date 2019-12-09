@@ -9,7 +9,7 @@
 #define SERIAL_BAUD_RATE 115200
 #endif
 
-move mo;
+Move move;
 
 void setup() 
 {
@@ -22,8 +22,12 @@ void setup()
 
 void loop()
 {
-    mo.forward();
+    move.forward();
     delay(1000);
-    mo.stop();
+    move.left(1000);
+    delay(1000);
+    move.right(1000);
+    delay(1000);
+    move.stop();
     delay(1000);
 }
