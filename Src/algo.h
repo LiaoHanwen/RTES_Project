@@ -6,8 +6,8 @@
 class Algo
 {
 public:
-    static int wifi2Distance(int strength);
-    static int distance2Point(int x, int y, const int *position, int refDistance);
+    static float wifi2Distance(int strength);
+	static int distance2Point(int x, int y, const int *position, int refDistance);
 };
 
 #endif

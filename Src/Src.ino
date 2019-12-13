@@ -5,6 +5,7 @@
 #include "algo.h"
 #include "wifi.h"
 
+#define TEST
 #define DEBUG
 
 // setting for serial
@@ -14,7 +15,7 @@
 
 // setting for table
 typedef int TABLE_TYPE;
-#define TABLE_SIZE 64;
+#define TABLE_SIZE 64
 
 // talbe
 TABLE_TYPE table[TABLE_SIZE][TABLE_SIZE];
@@ -24,6 +25,8 @@ TABLE_TYPE position[2];
 
 // init varibles for libs
 Move move;
+Wifi wifi;
+QMC5883L compass;
 
 void setup() 
 {
@@ -36,12 +39,28 @@ void setup()
     // init position
     position[0] = TABLE_SIZE / 2;
     position[1] = TABLE_SIZE / 2;
+	
+	// init compass
+	compass.init();
+	compass.setSamplingRate(128);
+	
+	// init wifi
+	wifi.init();
 }
 
 void loop()
 {
+#ifdef TEST
+	int strengh = wifi.getWifiStrengh();
+	float distance = Algo::wifi2Distance(strengh);
+	Serial.print(strengh);
+	Serial.print("    ");
+	Serial.println(distance);
+#endif
+
+#ifndef TEST
     int wifi = Wifi::getWifiStrengh();
-    int distance = Algo::wifi2distance();
+    int distance = Algo::wifi2Distance();
 
     int maxPoint = -100;
     int maxX = -1;
@@ -61,4 +80,5 @@ void loop()
     }
 
     // todo move towards i,j
+#endif
 }
