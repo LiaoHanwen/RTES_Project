@@ -4,68 +4,110 @@
 #include "Arduino.h"
 #include <vector>
 
-#define ALGO_WIFI_N 32.5    //N = 10 * n ,其中n为环境衰减因子，3.25-4.5
-#define ALGO_WIFI_A -45     //接收机和发射机间隔1m时的信号强度
+#define PI 3.14
 
-#define GRID_LENGTH 400
-#define GRID_SIZE 50
+#define ALGO_WIFI_N 32.5 //N = 10 * n ,其中n为环境衰减因子，3.25-4.5
+#define ALGO_WIFI_A -45  //接收机和发射机间隔1m时的信号强度
 
-Algo::Algo(void) {
-    int grid_h = GRID_LENGTH / GRID_SIZE;
-    int grid_w = GRID_LENGTH / GRID_SIZE;
-
-    grid.resize(grid_h);
-    for (int i = 0; i < grid_h; ++i) {
-        grid[i].resize(grid_w);
-    }
-    init_x = grid_h / 2;
-    init_y = grid_w / 2;
-    prevPosition.first = init_x;
-    prevPosition.second = init_y;
-}
-
-float Algo::wifi2Distance(int strengh)
+Algo::Algo()
 {
-    float iu = (float)(ALGO_WIFI_A - strengh) / (float) ALGO_WIFI_N;
-	float distance = powf(10.0, iu);
-    return distance;
+    pointNear = 0;
+    pointFar = 0;
+    kNear = 0;
+    kFar = 0;
+    mag = 1;
 }
 
-void Algo::updatePosition() {
-    // TODO: pase in the movement;
-    pair<int, int> newPosition;
-    prevPosition = currPosition;
-    currPosition = newPosition;
+// return in cm
+int Algo::wifi2Distance(int strengh)
+{
+    float iu = (float)(ALGO_WIFI_A - strengh) / (float)ALGO_WIFI_N;
+    float distance = powf(10.0, iu);
+    return distance * 100;
 }
 
-float Algo::angle2north() {
-    return atan((currPosition.second - prevPosition.second) / (currPosition.first - prevPosition.first));
-}
-
-void Algo::updateGrid(int rx, int ry, int r) {
-    double tol = 0.1;
-    for (int x = 0; x < grid.size(); x++) {
-        for (int y = 0; y < grid[0].size(); y++) {
-            if ((double) abs(sq(x - rx) + sq(y - ry) - sq(r))< tol) {
-                grid[x][y] += 1;
-            }
+int Algo::distance2Point(int x, int y, const float *position, int refDistance)
+{
+    double distance = 12.5 * sqrt(sq(x - *position) + sq(y - *(position + 1)));
+    int point;
+    if (distance < refDistance)
+    {
+        if (distance < pointNear)
+        {
+            point = 80 - (pointNear - distance) * kFar;
         }
+        else
+        {
+            point = 100 - (refDistance - distance) * kNear;
+        }
+    }
+    else
+    {
+        if (distance > pointFar)
+        {
+            point = 80 - (distance - pointFar) * kFar;
+        }
+        else
+        {
+            point = 100 - (distance - refDistance) * kNear;
+        }
+    }
+
+    return point * mag;
+}
+
+void Algo::updatePara(int refDistance)
+{
+    if(refDistance == 0)
+    {
+        return;
+    }
+    int div3 = refDistance / 3;
+    pointNear = refDistance - div3;
+    pointFar = refDistance + div3;
+
+    // 20 / (R/3)
+    kNear = 60 / refDistance;
+
+    // 80 / (2R/3)
+    kFar = 120 / refDistance;
+
+    mag = (float)(400 - refDistance) / 100.0;
+    if(mag < 1)
+    {
+        mag = 1;
     }
 }
 
-pair<int, int> Algo::findMax() {
-    int maxRSSI = -1;
-    pair<int, int> coordinate(-1, -1);
-    for (int x = 0; x < grid.size(); x++) {
-        for (int y = 0; y < grid[0].size(); y++) {
-            if (grid[x][y] > maxRSSI) {
-                maxRSSI = grid[x][y];
-                coordinate.first = x;
-                coordinate.second = y;
-            }
-        }
+// negative for turning left
+int Algo::getAngle(float x, float y, const float *position)
+{
+    if(*(position + 1) == y)
+    {
+        if(*(position + 1) > y)
+            return - PI / 2;
+        else
+            return PI / 2;
+    } 
+    else if(y > *(position + 1))  // 1, 2
+    {
+        return atan((*position - x) / (*(position + 1) - y)) * 180 / PI;
     }
-    return coordinate;
+    else if(x > *position) // 4
+    {
+        return atan((*position - x) / (*(position + 1) - y)) * 180 / PI + 180;
+    }
+    else  // 3
+    {
+        return atan((*position - x) / (*(position + 1) - y)) * 180 / PI - 180;
+    }
 }
 
-
+void Algo::updatePosition(float *position, int direction, float pace)
+{
+    float rad = (float)direction / 180 * PI;
+    Serial.print("rad");
+    Serial.println(rad);
+    *position += sin(rad) * pace;
+    *(position + 1) += cos(rad) * pace;
+}
