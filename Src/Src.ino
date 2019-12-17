@@ -18,18 +18,27 @@ using namespace std;
 #define SERIAL_BAUD_RATE 115200
 #endif
 
+// forward pace
+#define PACE 8
+// 6.25 * frac
+#define FORWARD_ARGU 3.6
+
 // setting for table
-typedef int TABLE_TYPE;
+typedef uint16_t TABLE_TYPE;
 #define TABLE_SIZE 128
 
 // talbe  6.25cm each
-uint8_t table[TABLE_SIZE][TABLE_SIZE];
+TABLE_TYPE table[TABLE_SIZE][TABLE_SIZE];
 
 // position of the car
 float position[2];
 
 // direction
 int direction = 0;
+
+// distance
+int g_distance = 1000;
+int g_lastDistance = 1000;
 
 // init varibles for libs
 Move g_move;
@@ -63,33 +72,50 @@ void setup()
 void loop()
 {
 #ifdef TEST
-    g_wifi.broadcast("test message");
+    g_move.left(45);
     delay(1000);
+    g_move.left(45);
+    delay(1000);
+    g_move.left(90);
+    delay(1000);
+    g_move.left(180);
+    delay(5000);
+    g_move.right(45);
+    delay(1000);
+    g_move.right(45);
+    delay(1000);
+    g_move.right(90);
+    delay(1000);
+    g_move.right(180);
+    delay(10000);
 #endif
 
 #ifndef TEST
 
 #ifdef DEBUG
     Serial.println("new loop");
-#endif 
+#endif
 
 #ifdef WIFI_DEBUG
     char debugString[1024];
 #endif
 
     int strengh = g_wifi.getWifiStrengh();
-    int distance = g_algo.wifi2Distance(strengh);
-    if(distance != 0)
+    g_lastDistance = g_distance;
+    g_distance = g_algo.wifi2Distance(strengh);
+    if (g_distance != 0)
     {
-        g_algo.updatePara(distance);
+        g_algo.updatePara(g_distance);
     }
-    
+
 #ifdef WIFI_DEBUG
-    sprintf(debugString, "strengh: %d, distance: %d\n", strengh, distance);
+    sprintf(debugString, "strengh: %d, distance: %d", strengh, g_distance);
     g_wifi.broadcast(debugString);
+    delay(1000);
 #endif
 
     int maxPoint = -1;
+    int maxAddPoint = -1;
     int maxX = -1;
     int maxY = -1;
     for (int i = 0; i < TABLE_SIZE; ++i)
@@ -97,9 +123,11 @@ void loop()
         for (int j = 0; j < TABLE_SIZE; ++j)
         {
             table[i][j] *= 0.9;
-            table[i][j] += g_algo.distance2Point(i, j, position, distance);
+            int addPoint = g_algo.distance2Point(i, j, position, g_distance);
+            table[i][j] += addPoint;
             if (table[i][j] > maxPoint)
             {
+                maxAddPoint = addPoint;
                 maxPoint = table[i][j];
                 maxX = i;
                 maxY = j;
@@ -111,31 +139,29 @@ void loop()
     int turn = angle - direction;
 
 #ifdef WIFI_DEBUG
-    sprintf(debugString, "max: %d, %d  max point: %d  angle: %d  turn: %d\n", maxX, maxY, maxPoint, angle, turn);
+    sprintf(debugString, "max: %d, %d  max point: %d  add: %d  angle: %d  turn: %d", maxX, maxY, maxPoint, maxAddPoint, angle, turn);
     g_wifi.broadcast(debugString);
 #endif
 
-    if (turn < 0)
+    if(g_lastDistance - g_distance < float(PACE) * FORWARD_ARGU)
     {
-        g_move.left(-turn);
-    }
-    else
-    {
-        g_move.right(turn);
+        // change to new direction
+        if (turn < 0)
+            g_move.left(-turn);
+        else
+            g_move.right(turn);
+        direction += turn;
     }
 
-    direction += turn;
-
-    int pace = 1;
-    g_move.forward(pace);
-    g_algo.updatePosition(position, direction, pace);
+    g_move.forward(PACE);
+    g_algo.updatePosition(position, direction, PACE);
 #ifdef WIFI_DEBUG
-    sprintf(debugString, "position: %f, %f  direction: %d\n\n", *position, *(position + 1), direction);
+    sprintf(debugString, "position: %f, %f  direction: %d\n", *position, *(position + 1), direction);
     g_wifi.broadcast(debugString);
 #endif
 
 #ifdef DEBUG
-    delay(1000);
+    delay(5000);
 #endif
 
 #endif

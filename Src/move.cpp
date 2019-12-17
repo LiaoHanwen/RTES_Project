@@ -21,9 +21,13 @@
 #define MOVE_TURN_LEFT 3000
 #define MOVE_TURN_RIGHT 3000
 
-#define MOVE_FORWARD_CONS 250
-#define MOVE_TURN_LEFT_CONS 15
-#define MOVE_TURN_RIGHT_CONS 15
+#define MOVE_FORWARD_CONS 113
+
+#define MOVE_TURN_LEFT_CONS 11
+#define MOVE_TURN_LEFT_INIT 90
+
+#define MOVE_TURN_RIGHT_CONS 11
+#define MOVE_TURN_RIGHT_INIT 90
 
 Move::Move()
 {
@@ -136,14 +140,14 @@ void Move::right(QMC5883L *compass, int angle)
 void Move::left(int angle)
 {
 	left();
-	delay(angle * MOVE_TURN_LEFT_CONS);
+	delay(angle * MOVE_TURN_LEFT_CONS + MOVE_TURN_LEFT_INIT);
 	stop();
 }
 
 void Move::right(int angle)
 {
 	right();
-	delay(angle * MOVE_TURN_RIGHT_CONS);
+	delay(angle * MOVE_TURN_RIGHT_CONS + MOVE_TURN_RIGHT_INIT);
 	stop();
 }
 

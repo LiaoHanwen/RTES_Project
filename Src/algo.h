@@ -12,7 +12,7 @@ public:
     Algo();
     int wifi2Distance(int strength);
     int distance2Point(int x, int y, const float *position, int refDistance);
-    void updatePara(int refDistance);
+    void updatePara(float refDistance);
     int getAngle(float x, float y, const float *position);
     void updatePosition(float *position, int direction, float pace);
 private:

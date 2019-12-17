@@ -9,6 +9,8 @@
 #define ALGO_WIFI_N 32.5 //N = 10 * n ,其中n为环境衰减因子，3.25-4.5
 #define ALGO_WIFI_A -45  //接收机和发射机间隔1m时的信号强度
 
+#define DEBUG
+
 Algo::Algo()
 {
     pointNear = 0;
@@ -53,30 +55,37 @@ int Algo::distance2Point(int x, int y, const float *position, int refDistance)
         }
     }
 
+    if(point < 0)
+        return 0;
+
     return point * mag;
 }
 
-void Algo::updatePara(int refDistance)
+void Algo::updatePara(float refDistance)
 {
     if(refDistance == 0)
     {
         return;
     }
-    int div3 = refDistance / 3;
+    float div3 = refDistance / 3.0;
     pointNear = refDistance - div3;
     pointFar = refDistance + div3;
 
     // 20 / (R/3)
-    kNear = 60 / refDistance;
+    kNear = 60.0 / refDistance;
 
     // 80 / (2R/3)
-    kFar = 120 / refDistance;
+    kFar = 120.0 / refDistance;
 
     mag = (float)(400 - refDistance) / 100.0;
     if(mag < 1)
     {
         mag = 1;
     }
+
+#ifdef DEBUG
+    Serial.printf("%f %f %f %f %f\n", pointNear, pointFar, kNear, kFar, mag);
+#endif
 }
 
 // negative for turning left
@@ -106,8 +115,6 @@ int Algo::getAngle(float x, float y, const float *position)
 void Algo::updatePosition(float *position, int direction, float pace)
 {
     float rad = (float)direction / 180 * PI;
-    Serial.print("rad");
-    Serial.println(rad);
     *position += sin(rad) * pace;
     *(position + 1) += cos(rad) * pace;
 }
