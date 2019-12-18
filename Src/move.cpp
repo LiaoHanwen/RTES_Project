@@ -26,7 +26,7 @@
 #define MOVE_TURN_LEFT 3000
 #define MOVE_TURN_RIGHT 3000
 
-#define MOVE_FORWARD_CONS 110
+#define MOVE_FORWARD_CONS 27
 
 #define MOVE_TURN_LEFT_CONS 11
 #define MOVE_TURN_LEFT_INIT 90
@@ -167,7 +167,9 @@ float Move::forward(int grid)
     start = millis();
     forward();
 
-    for(int i = 0; i < grid; i++)
+    int grid4 = grid * 4;
+
+    for(int i = 0; i < grid4; i++)
     {
         if(digitalRead(INTERRUPT_PIN1) == LOW || digitalRead(INTERRUPT_PIN2) == LOW || digitalRead(INTERRUPT_PIN3) == LOW)
         {

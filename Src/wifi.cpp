@@ -40,12 +40,28 @@ void Wifi::init()
 int Wifi::getWifiStrengh()
 {
 	int r = 0;
-	int last = 0;
+	int sig = 0;
 	delay(200);
-	while(r == 0 || last != r)
+	int times = 0;
+	while(times < 3)
 	{
-		last = r;
 		r = WiFi.RSSI();
+		if(r == 0)
+		{
+			times = 0;
+			continue;
+		}
+
+		if(r == sig)
+		{
+			times++;
+		}
+		else
+		{
+			sig = r;
+			times = 0;
+		}
+		
 		delay(200);
 	}
     return r;

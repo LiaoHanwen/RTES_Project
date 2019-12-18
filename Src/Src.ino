@@ -28,7 +28,7 @@ using namespace std;
 // forward pace
 #define PACE 8
 // 6.25 * frac
-#define FORWARD_ARGU 2.5
+#define FORWARD_ARGU 1.5
 
 // setting for table
 typedef uint16_t TABLE_TYPE;
@@ -45,7 +45,7 @@ int direction = 0;
 
 // distance
 int g_distance = 1000;
-int g_lastDistance = 1000;
+int g_lastDistance[2] = {1000, 1000};
 
 // init varibles for libs
 Move g_move;
@@ -100,7 +100,6 @@ void loop()
 #endif
 
     int strengh = g_wifi.getWifiStrengh();
-    g_lastDistance = g_distance;
     g_distance = g_algo.wifi2Distance(strengh);
     if (g_distance != 0)
     {
@@ -121,7 +120,7 @@ void loop()
     {
         for (int j = 0; j < TABLE_SIZE; ++j)
         {
-            table[i][j] *= 0.9;
+            table[i][j] *= 0.8;
             int addPoint = g_algo.distance2Point(i, j, position, g_distance);
             table[i][j] += addPoint;
             if (table[i][j] > maxPoint)
@@ -142,7 +141,12 @@ void loop()
     g_wifi.broadcast(debugString);
 #endif
 
-    if(g_lastDistance - g_distance < float(PACE) * FORWARD_ARGU)
+    // modify g_lastDistance
+    int compareDistance = g_lastDistance[0] + g_lastDistance[1] / 2;
+    g_lastDistance[0] = g_lastDistance[1];
+    g_lastDistance[1] = g_distance;
+
+    if(compareDistance - g_distance < float(PACE) * FORWARD_ARGU)
     {
         // change to new direction
         if (turn < 0)
@@ -157,10 +161,13 @@ void loop()
     int lDistance = g_ultra.getLDistance();
     int rDistance = g_ultra.getRDistance();
 
+    // do not turn left
+    bool rPref = false;
+
     while((lDistance != 0 && lDistance < 10 * PACE) || (rDistance != 0 && rDistance < 10 * PACE)
         || digitalRead(INTERRUPT_PIN1) == LOW || digitalRead(INTERRUPT_PIN2) == LOW || digitalRead(INTERRUPT_PIN3) == LOW)
     {
-        int angle = 0;
+        int angle = 30;
         for(; angle < 120; angle += 30)
         {
             g_servo.setAngle(angle);
@@ -169,7 +176,7 @@ void loop()
             lDistance = g_ultra.getLDistance();
             rDistance = g_ultra.getRDistance();
 
-            if(lDistance > 10 * PACE)
+            if(lDistance > 10 * PACE && !rPref)
             {
                 g_move.left(angle);
                 g_servo.setAngle(0);
@@ -178,6 +185,7 @@ void loop()
 
             if(rDistance > 10 * PACE)
             {
+                rPref = true;
                 g_move.right(angle);
                 g_servo.setAngle(0);
                 break;
@@ -195,12 +203,12 @@ void loop()
 
     g_algo.updatePosition(position, direction, forwardDistance);
 #ifdef WIFI_DEBUG
-    sprintf(debugString, "position: %f, %f  direction: %d\n", *position, *(position + 1), direction);
+    sprintf(debugString, "position: %f, %f  direction: %d  forward: %f\n", *position, *(position + 1), direction, forwardDistance);
     g_wifi.broadcast(debugString);
 #endif
 
 #ifdef DEBUG
-    delay(5000);
+    delay(1000);
 #endif
 
 #endif
