@@ -56,7 +56,6 @@ Wifi g_wifi;
 Algo g_algo;
 Servo g_servo;
 Ultra g_ultra;
-QMC5883L g_compass;
 
 void setup()
 {
@@ -75,10 +74,6 @@ void setup()
     position[0] = TABLE_SIZE / 2;
     position[1] = TABLE_SIZE / 2;
 
-    // init compass
-    g_compass.init();
-    g_compass.setSamplingRate(128);
-
     // init wifi
     g_wifi.init();
 #ifdef WIFI_DEBUG
@@ -89,7 +84,8 @@ void setup()
 void loop()
 {
 #ifdef TEST
-    Serial.println(digitalRead(INTERRUPT_PIN1));
+    int strengh = g_wifi.getWifiStrengh();
+    Serial.println(strengh);
 #endif
 
 #ifndef TEST
@@ -104,19 +100,6 @@ void loop()
 
     int strengh = g_wifi.getWifiStrengh();
 
-    if(strengh > WIFI_TERMINAL)
-    {
-#ifdef WIFI_DEBUG
-        sprintf(debugString, "TERMINAL!!!!!!!!!!\n");
-        g_wifi.broadcast(debugString);
-        delay(1000);
-#endif
-        while(true)
-        {
-            yield();
-        }
-    }
-
     g_distance = g_algo.wifi2Distance(strengh);
     if (g_distance != 0)
     {
@@ -126,7 +109,7 @@ void loop()
 #ifdef WIFI_DEBUG
     sprintf(debugString, "strengh: %d, distance: %d", strengh, g_distance);
     g_wifi.broadcast(debugString);
-    delay(1000);
+    delay(300);
 #endif
 
     int maxPoint = -1;
