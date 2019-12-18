@@ -4,6 +4,8 @@
 #include "move.h"
 #include "algo.h"
 #include "wifi.h"
+#include "servo.h"
+#include "ultra.h"
 
 #include <string>
 
@@ -18,10 +20,15 @@ using namespace std;
 #define SERIAL_BAUD_RATE 115200
 #endif
 
+// interrupt pins
+#define INTERRUPT_PIN1 0
+#define INTERRUPT_PIN2 16
+#define INTERRUPT_PIN3 2
+
 // forward pace
 #define PACE 8
 // 6.25 * frac
-#define FORWARD_ARGU 3.6
+#define FORWARD_ARGU 2.5
 
 // setting for table
 typedef uint16_t TABLE_TYPE;
@@ -44,6 +51,8 @@ int g_lastDistance = 1000;
 Move g_move;
 Wifi g_wifi;
 Algo g_algo;
+Servo g_servo;
+Ultra g_ultra;
 QMC5883L g_compass;
 
 void setup()
@@ -53,6 +62,11 @@ void setup()
     Serial.begin(SERIAL_BAUD_RATE);
     Serial.println("\n\n\nserial debug start");
 #endif
+
+    // init interrupt pins
+    pinMode(INTERRUPT_PIN1, INPUT);
+    pinMode(INTERRUPT_PIN2, INPUT);
+    pinMode(INTERRUPT_PIN3, INPUT);
 
     // init position
     position[0] = TABLE_SIZE / 2;
@@ -72,22 +86,7 @@ void setup()
 void loop()
 {
 #ifdef TEST
-    g_move.left(45);
-    delay(1000);
-    g_move.left(45);
-    delay(1000);
-    g_move.left(90);
-    delay(1000);
-    g_move.left(180);
-    delay(5000);
-    g_move.right(45);
-    delay(1000);
-    g_move.right(45);
-    delay(1000);
-    g_move.right(90);
-    delay(1000);
-    g_move.right(180);
-    delay(10000);
+    Serial.println(digitalRead(INTERRUPT_PIN1));
 #endif
 
 #ifndef TEST
@@ -153,8 +152,48 @@ void loop()
         direction += turn;
     }
 
-    g_move.forward(PACE);
-    g_algo.updatePosition(position, direction, PACE);
+    // avoid
+    g_ultra.mesureDistance();
+    int lDistance = g_ultra.getLDistance();
+    int rDistance = g_ultra.getRDistance();
+
+    while((lDistance != 0 && lDistance < 10 * PACE) || (rDistance != 0 && rDistance < 10 * PACE)
+        || digitalRead(INTERRUPT_PIN1) == LOW || digitalRead(INTERRUPT_PIN2) == LOW || digitalRead(INTERRUPT_PIN3) == LOW)
+    {
+        int angle = 0;
+        for(; angle < 120; angle += 30)
+        {
+            g_servo.setAngle(angle);
+
+            g_ultra.mesureDistance();
+            lDistance = g_ultra.getLDistance();
+            rDistance = g_ultra.getRDistance();
+
+            if(lDistance > 10 * PACE)
+            {
+                g_move.left(angle);
+                g_servo.setAngle(0);
+                break;
+            }
+
+            if(rDistance > 10 * PACE)
+            {
+                g_move.right(angle);
+                g_servo.setAngle(0);
+                break;
+            }
+        }
+
+        if(angle == 150)
+        {
+            g_move.left(90);
+            g_servo.setAngle(0);
+        }
+    }
+
+    float forwardDistance = g_move.forward(PACE);
+
+    g_algo.updatePosition(position, direction, forwardDistance);
 #ifdef WIFI_DEBUG
     sprintf(debugString, "position: %f, %f  direction: %d\n", *position, *(position + 1), direction);
     g_wifi.broadcast(debugString);

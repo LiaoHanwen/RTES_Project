@@ -41,6 +41,7 @@ int Wifi::getWifiStrengh()
 {
 	int r = 0;
 	int last = 0;
+	delay(200);
 	while(r == 0 || last != r)
 	{
 		last = r;

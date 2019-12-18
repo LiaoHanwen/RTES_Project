@@ -15,19 +15,26 @@
 #define MOVE_BIN2 5
 #define MOVE_PWMB 6
 
+// interrupt pins
+#define INTERRUPT_PIN1 0
+#define INTERRUPT_PIN2 16
+#define INTERRUPT_PIN3 2
+
 #define MOVE_FORWARD_LEFT 4000
 #define MOVE_FORWARD_RIGHT 4000
 
 #define MOVE_TURN_LEFT 3000
 #define MOVE_TURN_RIGHT 3000
 
-#define MOVE_FORWARD_CONS 113
+#define MOVE_FORWARD_CONS 110
 
 #define MOVE_TURN_LEFT_CONS 11
 #define MOVE_TURN_LEFT_INIT 90
 
 #define MOVE_TURN_RIGHT_CONS 11
 #define MOVE_TURN_RIGHT_INIT 90
+
+extern Move g_move;
 
 Move::Move()
 {
@@ -41,12 +48,12 @@ void Move::forward()
     Serial.println("move forward");
 #endif
     stall();
-    pwm.setPWM(MOVE_AIN1, 0, 4096);
-    pwm.setPWM(MOVE_AIN2, 4096, 0);
+    pwm.setPWM(MOVE_AIN1, 4096, 0);
+    pwm.setPWM(MOVE_AIN2, 0, 4096);
     pwm.setPWM(MOVE_PWMA, 0, MOVE_FORWARD_LEFT);
 
-    pwm.setPWM(MOVE_BIN1, 0, 4096);
-    pwm.setPWM(MOVE_BIN2, 4096, 0);
+    pwm.setPWM(MOVE_BIN1, 4096, 0);
+    pwm.setPWM(MOVE_BIN2, 0, 4096);
     pwm.setPWM(MOVE_PWMB, 0, MOVE_FORWARD_RIGHT);
     restart();
 }
@@ -151,9 +158,32 @@ void Move::right(int angle)
 	stop();
 }
 
-void Move::forward(int grid)
+float Move::forward(int grid)
 {
+    // reset para
+    start = 0;
+    end = 0;
+
+    start = millis();
     forward();
-    delay(grid * MOVE_FORWARD_CONS);
+
+    for(int i = 0; i < grid; i++)
+    {
+        if(digitalRead(INTERRUPT_PIN1) == LOW || digitalRead(INTERRUPT_PIN2) == LOW || digitalRead(INTERRUPT_PIN3) == LOW)
+        {
+            stop();
+            end = millis();
+            break;
+        }
+
+        delay(MOVE_FORWARD_CONS);
+    }
+
+    if(end == 0)
+    {
+        end = millis();
+    }
     stop();
+
+    return (float)(end - start) / (float)MOVE_FORWARD_CONS;
 }

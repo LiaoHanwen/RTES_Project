@@ -5,8 +5,8 @@
 
 #include <WiFiUdp.h>
 
-const char SSID[] = "Bingchen_Wang";
-const char PASSWORD[] = "257@Gold#5Q";
+const char SSID[] = "RTES_TEST";
+const char PASSWORD[] = "12345678";
 
 class Wifi
 {

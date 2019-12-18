@@ -13,6 +13,8 @@ private:
     Adafruit_PWMServoDriver pwm;
     inline void stall() {pwm.setPWM(3, 0, 4096);};
     inline void restart() {pwm.setPWM(3, 4096, 0);};
+    unsigned long start;
+    unsigned long end;
 public:
     Move();
     void forward();
@@ -20,10 +22,12 @@ public:
     void right(QMC5883L *compass, int angle);
 	void left(int angle);
 	void right(int angle);
-    void forward(int distance);
+    float forward(int distance);
 	void left();
 	void right();
 	void stop();
+
+    void stopTimer(){end = millis();};
 };
 
 #endif

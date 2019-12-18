@@ -1,13 +1,13 @@
 void setup()
 {
-  pinMode(14, INPUT);
+  pinMode(16, INPUT);
   Serial.begin(115200);
 }
 
 
 void loop() 
 {
-  if (digitalRead(14) == HIGH)
+  if (digitalRead(16) == HIGH)
   {
     Serial.println("HIGH");
   }
