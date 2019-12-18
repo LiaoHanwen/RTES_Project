@@ -6,7 +6,7 @@
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 
-#define DEBUG
+//#define DEBUG
 
 #define PORT 8110
 

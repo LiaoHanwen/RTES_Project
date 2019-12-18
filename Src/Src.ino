@@ -12,7 +12,7 @@
 using namespace std;
 
 //#define TEST
-#define DEBUG
+//#define DEBUG
 #define WIFI_DEBUG
 
 // setting for serial
@@ -24,6 +24,9 @@ using namespace std;
 #define INTERRUPT_PIN1 0
 #define INTERRUPT_PIN2 16
 #define INTERRUPT_PIN3 2
+
+// wifi strengh terminal
+#define WIFI_TERMINAL -40
 
 // forward pace
 #define PACE 8
@@ -45,7 +48,7 @@ int direction = 0;
 
 // distance
 int g_distance = 1000;
-int g_lastDistance[2] = {1000, 1000};
+int g_lastDistance[2] = {0, 0};
 
 // init varibles for libs
 Move g_move;
@@ -100,6 +103,20 @@ void loop()
 #endif
 
     int strengh = g_wifi.getWifiStrengh();
+
+    if(strengh > WIFI_TERMINAL)
+    {
+#ifdef WIFI_DEBUG
+        sprintf(debugString, "TERMINAL!!!!!!!!!!\n");
+        g_wifi.broadcast(debugString);
+        delay(1000);
+#endif
+        while(true)
+        {
+            yield();
+        }
+    }
+
     g_distance = g_algo.wifi2Distance(strengh);
     if (g_distance != 0)
     {

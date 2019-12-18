@@ -5,7 +5,7 @@
 
 #include <QMC5883L.h>
 
-#define DEBUG
+//#define DEBUG
 
 #define MOVE_PWMA 0
 #define MOVE_AIN2 1
@@ -187,5 +187,5 @@ float Move::forward(int grid)
     }
     stop();
 
-    return (float)(end - start) / (float)MOVE_FORWARD_CONS;
+    return (float)(end - start) / (float)MOVE_FORWARD_CONS / 4;
 }

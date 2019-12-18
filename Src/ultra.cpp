@@ -37,7 +37,7 @@ void Ultra::mesureDistance()
     digitalWrite(ULTRA_R_TRIG, LOW);
 
     long rDuration = pulseIn(ULTRA_R_ECHO, HIGH);
-    rDistance= rDuration*0.034/2;\
+    rDistance= rDuration*0.034/2;
 
     delay(50);
 }
