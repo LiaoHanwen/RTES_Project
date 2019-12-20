@@ -2,15 +2,15 @@
 
 #include "algo.h"
 #include "Arduino.h"
-#include <vector>
 
 #define PI 3.14
 
-#define ALGO_WIFI_N 23 //N = 10 * n ,其中n为环境衰减因子，3.25-4.5
-#define ALGO_WIFI_A -55  //接收机和发射机间隔1m时的信号强度
+#define ALGO_WIFI_N 23 //N = 10 * n, n = 3.25-4.5, environment attenuation factor
+#define ALGO_WIFI_A -55  // standard RSSI in 1 meter from becon to board
 
 //#define DEBUG
 
+// define the const that will be used
 Algo::Algo()
 {
     pointNear = 0;
